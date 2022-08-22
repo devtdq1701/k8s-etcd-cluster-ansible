@@ -1,0 +1,14 @@
+dependencies_pks:
+  - curl
+  - wget
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+  - lsb-release
+  - apparmor
+
+docker_key_url: "https://download.docker.com/linux/{{ ansible_os_family | lower }}/gpg"
+docker_repo_url: "https://download.docker.com/linux/{{ ansible_os_family | lower }} {{ ansible_distribution_release | lower }} stable"
+k8s_key_url: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+k8s_repo_url: "https://apt.kubernetes.io/ kubernetes-xenial main"

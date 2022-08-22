@@ -1,0 +1,5 @@
+- import_tasks: master.yml
+  when: inventory_hostname in groups['control-plane']
+
+- import_tasks: workers.yml
+  when: inventory_hostname in groups['workers']

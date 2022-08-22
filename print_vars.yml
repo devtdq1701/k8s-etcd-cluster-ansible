@@ -1,0 +1,9 @@
+- hosts: etcd
+  tasks:
+    # - name: Print all available facts
+    #   debug:
+    #     var: ansible_facts
+    - set_fact:
+        facts: "{{ groups['etcd'] }}"
+    - debug:
+        var: facts

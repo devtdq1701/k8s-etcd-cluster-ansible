@@ -1,0 +1,46 @@
+---
+- name: copy certificate authority to master
+  copy:
+    src: "{{ folder_path}}{{ item }}"
+    dest: /etc/kubernetes/pki/etcd/
+  loop:
+    - ca.crt
+    - apiserver-etcd-client.crt
+    - apiserver-etcd-client.key
+
+- name: create configuration files for kubeadm
+  template:
+    src: kubeadm-config.j2
+    dest: "/tmp/kubeadm-config.yaml"
+    # mode: 0644
+    # owner: root
+    # group: root
+  # notify:
+  # loop: "{{ groups['etcd'] }}"
+
+- name: initialize the cluster
+  shell: "kubeadm init --config /tmp/kubeadm-config.yaml --pod-network-cidr={{ pod_network }} --cri-socket {{ cri_socket }}"
+  become: true
+
+- name: create .kube directory
+  file:
+    path: $HOME/.kube
+    state: directory
+    mode: 0755
+  become: true
+
+- name: copy admin.conf to user's kube config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "$HOME/.kube/config"
+    remote_src: yes
+    # owner: $USER
+    # group: $USER
+  become: true
+
+- name: create manifest directory
+  file:
+    path: $HOME/manifest
+    state: directory
+    mode: 0755
+  become: true

@@ -1,0 +1,10 @@
+---
+# - hosts: all
+#   roles:
+#     - prepare
+# - hosts: etcd
+#   roles:
+#     - etcd-cluster
+- hosts: ["control-plane", "etcd"]
+  roles:
+    - k8s-cluster

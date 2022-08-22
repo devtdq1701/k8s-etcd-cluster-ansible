@@ -1,0 +1,15 @@
+container_runtime: containerd
+containerd_version: "1.6.7"
+kube_version: "1.24.3"
+network_plugin: "calico" #flannel
+config_pod_network: false
+pod_network: "192.168.0.0/16" #10.244.0.0/16
+network_manifest_url: "https://docs.projectcalico.org/manifests/calico.yaml"
+# https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+cri_socket: "unix:///run/containerd/containerd.sock"
+k8s_pkgs:
+  - "kubectl={{ kube_version }}-00"
+  - "kubelet={{ kube_version }}-00"
+  - "kubeadm={{ kube_version }}-00"
+etcd_cluster: true
+etcd_deployment: kubeadm

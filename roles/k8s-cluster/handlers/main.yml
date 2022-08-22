@@ -1,0 +1,20 @@
+---
+- name: start kubelet
+  service:
+    name: kubelet
+    state: started
+
+- name: enable kubelet
+  service:
+    name: kubelet
+    enabled: yes
+
+- name: restart containerd
+  service:
+    name: containerd
+    state: restarted
+
+- name: enable containerd
+  service:
+    name: containerd
+    enabled: yes

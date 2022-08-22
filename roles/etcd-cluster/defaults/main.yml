@@ -1,0 +1,2 @@
+total_hosts: "{{ groups['etcd'] | length }}"
+master_host: "{{ groups['etcd'] | first }}"

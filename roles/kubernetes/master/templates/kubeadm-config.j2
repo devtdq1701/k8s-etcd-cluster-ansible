@@ -1,0 +1,18 @@
+---
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: ClusterConfiguration
+kubernetesVersion: v{{ kube_version }}
+etcd:
+  external:
+    endpoints:
+      {% for instance in groups['etcd'] %}{% set total = 3 | int %}{% if loop.index == total  %}- https://{{ hostvars[instance].ansible_all_ipv4_addresses | first }}:2379{% else %}- https://{{ hostvars[instance].ansible_all_ipv4_addresses | first }}:2379
+      {% endif %}{% endfor %}
+
+    caFile: /etc/kubernetes/pki/etcd/ca.crt
+    certFile: /etc/kubernetes/pki/etcd/apiserver-etcd-client.crt
+    keyFile: /etc/kubernetes/pki/etcd/apiserver-etcd-client.key
+networking:
+  podSubnet: "{{ pod_network }}"
+  serviceSubnet: "{{ service_cidr }}"
+nodeRegistration:
+  criSocket: "{{ cri_socket }}"

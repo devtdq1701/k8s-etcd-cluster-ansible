@@ -1,0 +1,57 @@
+- import_tasks: check_ports.yml
+
+- name: Check k8s installed in master
+  command: kubectl get nodes
+  ignore_errors: true
+  register: k8s_installed
+  when: inventory_hostname == groups['control-plane'][0]
+
+# - name: Check k8s heath
+#   command: kubectl get nodes | grep "{{ item }}" | grep "Ready"
+#   register: k8s_heath
+#   ignore_errors: true
+#   when: k8s_installed is succeeded
+#   loop:
+#     - "{{ inventory_hostname }}"
+
+- name: Not reach port requirement
+  fail:
+    msg: "K8s not setup because not reach ports requirement"
+  when: check_ports is failed
+
+- name: K8s is installed but not heathy.
+  fail:
+    msg: "K8s is installed but not heathy. U want to reinstall ?"
+  when: check_ports is failed and k8s_heath is failed
+
+- name: Not reach port requirement
+  fail:
+    msg: "K8s is installed and heathy. U want to reinstall ?"
+  when: check_ports is failed and k8s_heath is succeeded
+- name: gather os specific variables
+  # vars:
+  #   ansible_os_family: debian
+  #   ansible_distribution_release: buster
+  include_vars: "../vars/{{ ansible_os_family | lower }}.yml"
+- name: Check all port numbers are availability
+  wait_for:
+    port: "{{ item | int }}"
+    state: stopped # Port should be open
+    delay: 0 # No wait before first check (sec)
+    timeout: 10 # Stop checking after timeout (sec)
+  # ignore_errors: true
+  loop: "{{ ports }}"
+  when: etcd_cluster == true
+
+- name: Check all port numbers are availability
+  wait_for:
+    port: "{{ item | int }}"
+    state: stopped # Port should be open
+    delay: 0 # No wait before first check (sec)
+    timeout: 10 # Stop checking after timeout (sec)
+  # ignore_errors: true
+  loop:
+    - "{{ ports }}"
+    - 2379
+    - 2380
+  when: etcd_cluster == false

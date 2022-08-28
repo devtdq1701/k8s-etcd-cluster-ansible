@@ -1,9 +1,13 @@
-- hosts: etcd
+- hosts: all
   tasks:
     # - name: Print all available facts
     #   debug:
     #     var: ansible_facts
+    - name: Get DEB architecture
+      shell: dpkg --print-architecture
+      register: deb_architecture
+
     - set_fact:
-        facts: "{{ groups['etcd'] }}"
+        facts: "{{ hostvars[groups['etcd'][0]]['ansible_hostname'] }}"
     - debug:
         var: facts

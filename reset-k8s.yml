@@ -1,0 +1,103 @@
+---
+- hosts: kube-cluster
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Reset Kubernetes component
+      shell: "kubeadm reset -f"
+      ignore_errors: True
+
+    - name: Delete flannel.1 interface
+      command: ip link delete flannel.1
+      when: network == "flannel"
+      ignore_errors: True
+
+    - name: Delete cni0 interface
+      command: ip link delete cni0
+      when: network == "flannel"
+      ignore_errors: True
+
+    - name: Delete tunl0 interface
+      command: modprobe -r ipip
+      when: network == "calico"
+      ignore_errors: True
+
+    - name: Find network interfaces for Kubernetes
+      shell: "ip addr | grep {{ item }}"
+      with_items:
+        - "docker0"
+        - "flannel.1"
+        - "cni0"
+        - "tunl0"
+        - "vxlan.calico"
+      register: find_eths
+      ignore_errors: True
+
+    - name: Delete network interfaces for Kubernetes
+      when: item.stdout != ''
+      shell: "ip link delete {{ item.item }}"
+      with_items: "{{ find_eths['results'] }}"
+      ignore_errors: True
+
+    - name: Find blackhole route rule
+      shell: "ip route | awk '/blackhole/ {print $2}'"
+      register: find_blackhole
+      ignore_errors: True
+
+    - name: Delete blackhole route rule
+      when: find_blackhole.stdout != ''
+      shell: "ip route del {{ find_blackhole.stdout }}"
+      ignore_errors: True
+
+    - name: Remove k8s components pks
+      apt:
+        name: "kubeadm kubelet containerd.io kubectl"
+        state: absent
+        purge: yes
+        update_cache: yes
+      # loop:
+      #   - kubeadm
+      #   - kubelet
+      #   - containerd.io
+      #   - kubectl
+      ignore_errors: True
+
+    - name: Remove useless packages from the cache
+      apt:
+        autoclean: yes
+
+    - name: Remove dependencies that are no longer required
+      apt:
+        autoremove: yes
+
+    - name: Remove k8s n containerd apt key
+      file:
+        path: "/etc/apt/trusted.gpg.d/{{ item }}.gpg"
+        state: absent
+      loop:
+        - docker
+        - k8s
+      ignore_errors: True
+
+    - name: Remove k8s n containerd apt repo
+      file:
+        path: "/etc/apt/sources.list.d/{{ item }}.list"
+        state: absent
+      loop:
+        - kubernetes
+        - docker
+      ignore_errors: True
+
+    - name: "apt-get update"
+      apt:
+        update_cache: yes
+
+    - name: remove kube profile
+      file:
+        path: $HOME/.kube
+        state: absent
+
+    - name: Delete content & directory
+      file:
+        state: absent
+        path: /etc/kubernetes/

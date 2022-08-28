@@ -1,0 +1,98 @@
+---
+- name: Reset Kubernetes component
+  shell: "kubeadm reset --force --cri-socket={{ cri_socket }}"
+  register: reset_cluster
+
+- name: copy certificate authority to master
+  copy:
+    src: "{{ folder_path}}{{ item }}"
+    dest: /etc/kubernetes/pki/etcd/
+  loop:
+    - ca.crt
+    - apiserver-etcd-client.crt
+    - apiserver-etcd-client.key
+  when: etcd_cluster == 'true' and etcd_deployment == 'kubeadm'
+
+- name: gather facts from etcd
+  setup:
+  delegate_to: "{{ item }}"
+  delegate_facts: true
+  loop: "{{ groups['etcd'] }}"
+
+- name: create configuration files for kubeadm
+  template:
+    src: kubeadm-config.j2
+    dest: "/tmp/kubeadm-config.yaml"
+    # mode: 0644
+    # owner: root
+    # group: root
+  # notify:
+  # loop: "{{ groups['etcd'] }}"
+  # var:
+  #   - caFile: /etc/kubernetes/pki/etcd/ca.crt
+  #   - certFile: /etc/kubernetes/pki/etcd/apiserver-etcd-client.crt
+  #   - keyFile: /etc/kubernetes/pki/etcd/apiserver-etcd-client.key
+  when: etcd_cluster == 'true' and etcd_deployment == 'kubeadm'
+
+- name: initialize the cluster with external etcd cluster
+  shell: "kubeadm init --config /tmp/kubeadm-config.yaml"
+  when: reset_cluster is succeeded and etcd_cluster == 'true' and etcd_deployment == 'kubeadm'
+
+- name: copy certificate authority to master
+  copy:
+    src: "{{ folder_path}}{{ item }}"
+    dest: /etc/kubernetes/pki/etcd/
+  loop:
+    - ca.pem
+    - etcd.pem
+    - etcd-key.pem
+  when: etcd_cluster == 'true' and etcd_deployment == 'service'
+
+- name: create configuration files for kubeadm
+  template:
+    src: kubeadm-config2.j2
+    dest: "/tmp/kubeadm-config.yaml"
+    # mode: 0644
+    # owner: root
+    # group: root
+  # notify:
+  # loop: "{{ groups['etcd'] }}"
+  # var:
+  #   - caFile: /etc/kubernetes/pki/etcd/ca.pem
+  #   - certFile: /etc/kubernetes/pki/etcd/etcd.pem
+  #   - keyFile: /etc/kubernetes/pki/etcd/etcd-key.pem
+  when: etcd_cluster == 'true' and etcd_deployment == 'service'
+
+- name: initialize the cluster with external etcd cluster
+  shell: "kubeadm init --config /tmp/kubeadm-config.yaml"
+  when: reset_cluster is succeeded and etcd_cluster == 'true' and etcd_deployment == 'service'
+
+- name: Init Kubernetes cluster
+  when: reset_cluster is succeeded and etcd_cluster == 'false'
+  shell: |
+    kubeadm init --service-cidr {{ service_cidr }} --kubernetes-version v{{ kube_version }} --pod-network-cidr {{ pod_network }} --cri-socket={{ cri_socket }}
+  register: init_cluster
+
+- name: Create Kubernetes config directory
+  file:
+    path: ".kube/"
+    state: directory
+
+- name: Copy admin.conf to Home directory
+  when: init_cluster is succeeded
+  copy:
+    src: "{{ kubeadmin_config }}"
+    dest: ".kube/config"
+    mode: 0755
+    remote_src: true
+
+# - name: Deploy kubernetes dashboard into cluster
+#   when: init_cluster is succeeded and enable_dashboard
+#   command: |
+#     kubectl --kubeconfig={{ kubeadmin_config }} \
+#         apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/aio/deploy/recommended.yaml
+#   register: create_result
+#   until: create_result.rc == 0
+#   retries: 5
+#   delay: 2
+#   ignore_errors: true

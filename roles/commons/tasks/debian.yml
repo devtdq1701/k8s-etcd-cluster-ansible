@@ -1,0 +1,77 @@
+- name: Get DEB architecture
+  shell: dpkg --print-architecture
+  register: deb_architecture
+
+- name: debian | install necessary dependencies
+  apt:
+    name: "{{ dependencies_pks }}"
+    state: "present"
+    update_cache: yes
+
+- name: debian | add docker apt-key
+  apt_key:
+    url: "{{ docker_key_url }}"
+    state: present
+    keyring: /etc/apt/trusted.gpg.d/docker.gpg
+  when: container_runtime == "docker" or container_runtime == "containerd"
+
+- name: debian | add docker' APT repository
+  apt_repository:
+    repo: "deb [arch={{ deb_architecture.stdout }} signed-by=/etc/apt/trusted.gpg.d/docker.gpg] {{ docker_repo_url }}"
+    state: present
+    filename: "docker"
+  when: container_runtime == "docker" or container_runtime == "containerd"
+
+- name: debian | install containerd
+  apt:
+    name: "containerd.io={{ containerd_version }}-1"
+    state: present
+    update_cache: true
+  when: container_runtime == "docker" or container_runtime == "containerd"
+
+- name: debian | mkdir /etc/containerd
+  file:
+    path: /etc/containerd
+    state: directory
+    mode: "0755"
+  when: container_runtime == "docker" or container_runtime == "containerd"
+
+- name: debian | configure containerd
+  shell: |
+    containerd config default>/etc/containerd/config.toml
+    sed -i -e 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+    systemctl restart containerd
+    systemctl enable containerd
+  # notify:
+  #   - restart containerd
+  #   - enable containerd
+  when: container_runtime == "docker" or container_runtime == "containerd"
+
+- name: debian | add k8s apt-key
+  apt_key:
+    url: "{{ k8s_key_url }}"
+    state: present
+    keyring: /etc/apt/trusted.gpg.d/k8s.gpg
+  become: true
+
+- name: debian | add k8s' APT repository
+  apt_repository:
+    repo: "deb [arch={{ deb_architecture.stdout }} signed-by=/etc/apt/trusted.gpg.d/k8s.gpg] {{ k8s_repo_url }}"
+    state: present
+    filename: "kubernetes"
+  become: true
+
+- name: debian | install k8s installation components
+  apt:
+    name: "{{ k8s_pkgs }}"
+    state: present
+    update_cache: true
+  become: true
+
+- name: debian | hold kubelet kubeadm kubectl
+  dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop: "{{ hold_services }}"
+  # notify:
+  #   - enable kubelet

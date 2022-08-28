@@ -1,0 +1,12 @@
+- name: Check if etcd has already run
+  stat:
+    path: "/etc/etcd/pki/ca.pem"
+  register: etcd_ca
+
+- name: Gen cert on node 1
+  include_tasks: master.yml
+  when: ansible_hostname == hostvars[groups['etcd'][0]]['ansible_hostname'] and etcd_cluster == 'true' and etcd_deployment == 'service' and not etcd_ca.stat.exists
+
+- name: Install etcd
+  include_tasks: all.yml
+  when: etcd_cluster == 'true' and etcd_deployment == 'service' and not etcd_ca.stat.exists

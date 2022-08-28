@@ -1,0 +1,79 @@
+- name: configure the kubelet to be a service manager for etcd.
+  copy:
+    src: 20-etcd-service-manager.conf
+    dest: /etc/systemd/system/kubelet.service.d/
+
+- name: reload systemd
+  command: systemctl daemon-reload
+
+- name: restart kubelet
+  service:
+    name: kubelet
+    state: restarted
+
+- name: create temp directories to store files that will end up on other hosts
+  file:
+    path: "/tmp/{{ inventory_hostname }}/"
+    state: directory
+
+- name: create configuration files for kubeadm
+  template:
+    src: kubeadmcfg.j2
+    dest: "/tmp/{{ inventory_hostname }}/kubeadmcfg.yaml"
+    # mode: 0644
+    # owner: root
+    # group: root
+
+- name: Generate the certificate authority
+  shell: |
+    kubeadm init phase certs etcd-ca
+  delegate_to: "{{ groups['etcd'][0] }}"
+
+- name: fetch certificate authority to local
+  fetch:
+    src: "/etc/kubernetes/pki/etcd/{{ item }}"
+    dest: "{{ folder_path }}"
+    flat: yes
+  loop:
+    - ca.crt
+    - ca.key
+  delegate_to: "{{ groups['etcd'][0] }}"
+
+- name: copy certificate authority to others
+  copy:
+    src: "{{ folder_path}}{{ item }}"
+    dest: /etc/kubernetes/pki/etcd/
+  loop:
+    - ca.crt
+    - ca.key
+  when: inventory_hostname != groups['etcd'][0]
+
+- name: Create certificates for each member
+  shell: |
+    kubeadm init phase certs etcd-server --config=/tmp/{{ inventory_hostname }}/kubeadmcfg.yaml
+    kubeadm init phase certs etcd-peer --config=/tmp/{{ inventory_hostname }}/kubeadmcfg.yaml
+    kubeadm init phase certs etcd-healthcheck-client --config=/tmp/{{ inventory_hostname }}/kubeadmcfg.yaml
+    kubeadm init phase certs apiserver-etcd-client --config=/tmp/{{ inventory_hostname }}/kubeadmcfg.yaml
+
+- name: clean up certs that should not be copied off this host
+  file:
+    path: /etc/kubernetes/pki/etcd/ca.key
+    state: absent
+  # loop:
+  #   - "{{ groups['etcd'][1] }}"
+  #   - "{{ groups['etcd'][2] }}"
+  when: ansible_hostname != hostvars[groups['etcd'][0]]
+
+- name: Create the static pod manifests
+  shell: |
+    kubeadm init phase etcd local --config=/tmp/{{ inventory_hostname }}/kubeadmcfg.yaml
+
+- name: fetch apiserver-etcd-client cert to local
+  fetch:
+    src: "/etc/kubernetes/pki/{{ item }}"
+    dest: "{{ folder_path }}"
+    flat: yes
+  loop:
+    - apiserver-etcd-client.crt
+    - apiserver-etcd-client.key
+  delegate_to: "{{ groups['etcd'][0] }}"

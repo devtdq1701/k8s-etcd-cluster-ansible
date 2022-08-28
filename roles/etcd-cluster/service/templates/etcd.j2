@@ -1,0 +1,29 @@
+[Unit]
+Description=etcd service
+Documentation=https://github.com/etcd-io/etcd
+
+[Service]
+Type=notify
+User=etcd
+ExecStart=/usr/local/bin/etcd \
+  --name {{ ansible_hostname }} \
+  --cert-file=/etc/etcd/pki/etcd.pem \
+  --key-file=/etc/etcd/pki/etcd-key.pem \
+  --peer-cert-file=/etc/etcd/pki/etcd.pem \
+  --peer-key-file=/etc/etcd/pki/etcd-key.pem \
+  --trusted-ca-file=/etc/etcd/pki/ca.pem \
+  --peer-trusted-ca-file=/etc/etcd/pki/ca.pem \
+  --peer-client-cert-auth \
+  --client-cert-auth \
+  --data-dir=/var/lib/etcd \
+  --initial-advertise-peer-urls https://{{ ansible_all_ipv4_addresses | first }}:2380 \
+  --listen-peer-urls https://{{ ansible_all_ipv4_addresses | first }}:2380 \
+  --listen-client-urls https://{{ ansible_all_ipv4_addresses | first }}:2379,https://127.0.0.1:2379 \
+  --advertise-client-urls https://{{ ansible_all_ipv4_addresses | first }}:2379 \
+  --initial-cluster-token etcd-cluster \
+  --initial-cluster {% for instance in groups['etcd'] %}{% set total = total_hosts | int %}{% if loop.index == total  %}{{ hostvars[instance]['ansible_hostname'] }}=https://{{ hostvars[instance].ansible_all_ipv4_addresses | first }}:2380{% else %}{{ hostvars[instance]['ansible_hostname'] }}=https://{{ hostvars[instance].ansible_all_ipv4_addresses | first }}:2380,{% endif %}{% endfor %} \
+  --initial-cluster-state new
+
+[Install]
+WantedBy=multi-user.target
+

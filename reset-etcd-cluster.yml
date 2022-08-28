@@ -1,0 +1,61 @@
+---
+- hosts: etcd
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Reset Kubernetes component
+      shell: "kubeadm reset -f"
+      ignore_errors: True
+
+    - name: Remove k8s components pks
+      apt:
+        name: "kubeadm kubelet containerd.io"
+        state: absent
+        # force_apt_get: yes
+        purge: yes
+        update_cache: yes
+      # loop:
+      #   - kubeadm
+      #   - kubelet
+      #   - containerd.io
+      ignore_errors: True
+
+    - name: Remove useless packages from the cache
+      apt:
+        autoclean: yes
+
+    - name: Remove dependencies that are no longer required
+      apt:
+        autoremove: yes
+
+    - name: Remove k8s n containerd apt key
+      file:
+        path: "/etc/apt/trusted.gpg.d/{{ item }}.gpg"
+        state: absent
+      loop:
+        - docker
+        - k8s
+      ignore_errors: True
+
+    - name: Remove k8s n containerd apt repo
+      file:
+        path: "/etc/apt/sources.list.d/{{ item }}.list"
+        state: absent
+      loop:
+        - kubernetes
+        - docker
+      ignore_errors: True
+
+    - name: "apt-get update"
+      apt:
+        update_cache: yes
+
+    - name: remove kube profile
+      file:
+        path: $HOME/.kube
+        state: absent
+
+    - name: Delete /etc/kubernetes/
+      file:
+        state: absent
+        path: /etc/kubernetes/

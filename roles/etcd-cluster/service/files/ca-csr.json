@@ -1,0 +1,16 @@
+{
+  "CN": "etcd cluster",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "VN",
+      "L": "VietNam",
+      "O": "Kubernetes",
+      "OU": "ETCD-CA",
+      "ST": "CocCoc"
+    }
+  ]
+}

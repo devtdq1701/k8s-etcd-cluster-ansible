@@ -1,10 +1,26 @@
 ---
-# - hosts: all
-#   roles:
-#     - prepare
 # - hosts: etcd
+#   gather_facts: yes
+#   become: yes
 #   roles:
-#     - etcd-cluster
-- hosts: ["control-plane", "etcd"]
+#     - { role: etcd-cluster/kubeadm, tags: [etcd, kubeadm] }
+
+# - hosts: etcd
+#   gather_facts: yes
+#   become: yes
+#   roles:
+#     - { role: etcd-cluster/service, tags: [etcd, service] }
+
+- hosts: control-plane
+  gather_facts: yes
+  become: yes
   roles:
-    - k8s-cluster
+    - { role: kubernetes/master, tags: master }
+    - { role: cni, tags: cni }
+
+# - hosts: worker
+#   gather_facts: yes
+#   become: yes
+#   roles:
+#     - { role: kubernetes/worker, tags: node }
+

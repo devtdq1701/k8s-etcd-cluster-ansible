@@ -1,0 +1,49 @@
+# - name: Add mappings to /etc/hosts
+#   blockinfile:
+#     path: /etc/hosts
+#     block: |
+#       {% for node in groups['all'] %}
+#         {{ hostvars[node].ansible_all_ipv4_addresses | first }} {{ hostvars[node]['ansible_hostname'] }}
+#       {% endfor %}
+- name: gather os specific variables
+  # vars:
+  #   ansible_os_family: debian
+  #   ansible_distribution_release: buster
+  include_vars: "../vars/{{ ansible_os_family | lower }}.yml"
+
+- name: disable swap
+  shell: |
+    swapoff -a
+
+- name: disable swap in fstab
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+    replace: '# \1'
+
+- name: enable kernel modules
+  shell: |
+    modprobe overlay
+    modprobe br_netfilter
+
+- name: configure persistent loading of modules
+  copy:
+    dest: /etc/modules-load.d/kubernetes.conf
+    mode: 0644
+    content: "overlay \nbr_netfilter"
+
+- name: settings sysctl
+  sysctl:
+    name: "{{ item }}"
+    value: "1"
+    sysctl_set: yes
+    state: present
+    reload: yes
+    sysctl_file: /etc/sysctl.d/kubernetes.conf
+  loop:
+    - net.ipv4.ip_forward
+    - net.bridge.bridge-nf-call-iptables
+    - net.bridge.bridge-nf-call-ip6tables
+
+- import_tasks: "debian.yml"
+  when: ansible_os_family == "Debian"

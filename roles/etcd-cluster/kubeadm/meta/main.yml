@@ -1,0 +1,7 @@
+
+---
+dependencies:
+  - role: commons
+    k8s_pkgs: ["kubelet={{ kube_version }}-00", "kubeadm={{ kube_version }}-00"]
+    hold_services: ["kubelet", "kubeadm"]
+    when: etcd_cluster == 'true' and etcd_deployment == 'kubeadm'

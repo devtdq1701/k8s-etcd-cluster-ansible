@@ -1,0 +1,23 @@
+{
+  "CN": "etcd",
+  "hosts": [
+    "localhost",
+    "127.0.0.1",
+    {% for instance in groups['etcd'] %}{% set total = total_hosts | int %}{% if loop.index == total  %}"{{ hostvars[instance].ansible_all_ipv4_addresses | first }}"
+    {% else %}"{{ hostvars[instance].ansible_all_ipv4_addresses | first }}",
+    {% endif %}{% endfor %}
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "VN",
+      "L": "VietNam",
+      "O": "Kubernetes",
+      "OU": "etcd",
+      "ST": "CocCoc"
+    }
+  ]
+}

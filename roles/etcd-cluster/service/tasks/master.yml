@@ -1,0 +1,58 @@
+# - name: Check if cfssl exist
+#   stat:
+#     path: "/usr/local/bin/cfssl"
+#   register: check_cfssl
+#   delegate_to: "{{ groups['etcd'][0] }}"
+
+- name: Check if cfssl exist
+  command: cfssl version
+  register: check_cfssl
+  ignore_errors: true
+
+- name: "get cfssl component"
+  get_url:
+    url: "{{ item }}"
+    dest: "/usr/local/bin/"
+    mode: 755
+  loop:
+    - https://storage.googleapis.com/kubernetes-the-hard-way/cfssl/1.4.1/linux/cfssl
+    - https://storage.googleapis.com/kubernetes-the-hard-way/cfssl/1.4.1/linux/cfssljson
+  # when: not check_cfssl.stat.exists
+  when: check_cfssl is failed
+
+- name: Copy necessary ca files
+  copy:
+    src: "{{ item }}"
+    dest: /tmp/
+  loop:
+    - ca-config.json
+    - ca-csr.json
+
+- name: Create directory for store ca file if it does not exist
+  file:
+    path: ~/etcd
+    state: directory
+    mode: '0755'
+
+- name: Create a Certificate Authority (CA)
+  shell: |
+    cfssl gencert -initca /tmp/ca-csr.json | cfssljson -bare $HOME/etcd/ca
+
+- name: Create etcd csr
+  template:
+    src: etcd-csr.j2
+    dest: "/tmp/etcd-csr.json"
+
+- name: Create TLS certificates
+  shell: |
+    cfssl gencert -ca=$HOME/etcd/ca.pem -ca-key=$HOME/etcd/ca-key.pem -config=/tmp/ca-config.json -profile=etcd /tmp/etcd-csr.json | cfssljson -bare $HOME/etcd/etcd
+
+- name: fetch certificate to local
+  fetch:
+    src: "$HOME/etcd/{{ item }}"
+    dest: "{{ folder_path }}"
+    flat: yes
+  loop:
+    - ca.pem
+    - etcd.pem
+    - etcd-key.pem

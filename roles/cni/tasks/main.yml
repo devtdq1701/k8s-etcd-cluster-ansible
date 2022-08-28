@@ -1,19 +1,18 @@
 - name: "get {{ network_plugin }} manifest"
   get_url:
     url: "{{ network_manifest_url }}"
-    dest: "$HOME/manifest/{{ network_plugin }}.yml"
-  become: true
+    dest: "/tmp/{{ network_plugin }}.yml"
 
-- name: "config ip subnet for {{ network_plugin }}"
-  shell: |
-    sed -i "/IPV4POOL_CIDR/s/^#//g" $HOME/manifest/{{ network_plugin }}.yml
-    sed -i "/192/s/^#//g" $HOME/manifest/{{ network_plugin }}.yml
-  when: config_pod_network == true and network_plugin == calico
-  become: true
+# for another calico link
+# - name: "config ip subnet for {{ network_plugin }}"
+#   shell: |
+#     sed -i "/IPV4POOL_CIDR/s/^#//g" $HOME/manifest/{{ network_plugin }}.yml
+#     sed -i "/192/s/^#//g" $HOME/manifest/{{ network_plugin }}.yml
+#   when: config_pod_network == true and network_plugin == calico
 
 - name: "config ip subnet for {{ network_plugin }}"
   lineinfile:
-    path: "$HOME/manifest/{{ network_plugin }}.yml"
+    path: "/tmp/{{ network_plugin }}.yml"
     search_string: "10.244.0.0/16"
     line: '"Network": {{ pod_network }}"'
   when: config_pod_network == true and network_plugin == flannel
@@ -21,17 +20,29 @@
 
 - name: "config ip subnet for {{ network_plugin }}"
   lineinfile:
-    path: "$HOME/manifest/{{ network_plugin }}.yml"
+    path: "/tmp/{{ network_plugin }}.yml"
     search_string: "192.168.0.0/16"
     line: 'value: "{{ pod_network }}"'
   when: config_pod_network == true and network_plugin == calico
-  become: true
+
+- name: "Check {{ network_plugin }} daemonset is working"
+  shell: kubectl --kubeconfig={{ kubeadmin_config }} get ds --all-namespaces | grep {{ network_plugin }}
+  register: check_net
+  ignore_errors: true
+  changed_when: false
+
+- name: install the operator on your cluster
+  when: check_net is failed
+  shell: |
+    kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/tigera-operator.yaml
+    kubectl create -f /tmp/{{ network_plugin }}.yml
+  ignore_errors: true
 
 - name: "install {{ network_plugin }}"
-  # become: yes
-  # become_user: ubuntu
+  when: check_net is failed
   shell: |
-    kubectl apply -f $HOME/manifest/{{ network_plugin }}.yml
+    kubectl create -f /tmp/{{ network_plugin }}.yml
+  # kubectl apply -f $HOME/manifest/{{ network_plugin }}.yml
   # args:
   #   chdir: $HOME
-  become: true
+  ignore_errors: true

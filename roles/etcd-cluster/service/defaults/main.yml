@@ -1,0 +1,6 @@
+# choose either URL
+google_url: "https://storage.googleapis.com/etcd"
+github_url: "https://github.com/etcd-io/etcd/releases/download"
+download_url: "{{ github_url }}"
+total_hosts: "{{ groups['etcd'] | length }}"
+master_host: "{{ groups['etcd'] | first }}"

@@ -1,0 +1,5 @@
+---
+dependencies:
+  - role: commons
+    k8s_pkgs: ["kubelet={{ kube_version }}-00", "kubeadm={{ kube_version }}-00", "kubectl={{ kube_version }}-00"]
+    hold_services: ["kubelet", "kubeadm", "kubectl"]

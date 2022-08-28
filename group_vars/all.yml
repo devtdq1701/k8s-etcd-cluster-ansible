@@ -1,17 +1,37 @@
+# Kubernetes
+kube_version: "1.24.3"
+# k8s_pkgs:
+#   - "kubectl={{ kube_version }}-00"
+#   - "kubelet={{ kube_version }}-00"
+#   - "kubeadm={{ kube_version }}-00"
+
+# Container runtimes (only 'containerd', .... :D)
 container_runtime: containerd
 containerd_version: "1.6.7"
-kube_version: "1.24.3"
+cri_socket: "unix:///run/containerd/containerd.sock"
+
+# Network implementation('flannel', 'calico', 'canal')
 network_plugin: "calico" #flannel
+calico_version: "3.24.0"
 config_pod_network: false
 pod_network: "192.168.0.0/16" #10.244.0.0/16
-network_manifest_url: "https://docs.projectcalico.org/manifests/calico.yaml"
+service_cidr: "10.96.0.0/12"
+network_manifest_url: "https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/custom-resources.yaml"
+# https://raw.githubusercontent.com/projectcalico/calico/v3.24.0/manifests/calico.yaml
 # https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
-cri_socket: "unix:///run/containerd/containerd.sock"
-k8s_pkgs:
-  - "kubectl={{ kube_version }}-00"
-  - "kubelet={{ kube_version }}-00"
-  - "kubeadm={{ kube_version }}-00"
-etcd_cluster: true
-etcd_deployment: kubeadm
+
+#etcd cluster
+# if u want a etcd cluster, please define them in inversitory file :)
+etcd_cluster: "true"
+# deployment method, using kubeadm or as service
+etcd_deployment: "service" #kubeadm
+etcd_ver: "3.4.20"
 # local folder to fetch cert from master
-folder_path: "/home/quangtd/Workspace/Ansibles/k8s-cluster/roles/etcd-cluster/files/"
+folder_path: "~/Workspace/Ansibles/kubeadm-ansible/roles/etcd-cluster/kubeadm/files/"
+
+
+# systemd_dir: /lib/systemd/system
+# system_env_dir: /etc/sysconfig
+network_dir: /etc/kubernetes/network
+kubeadmin_config: /etc/kubernetes/admin.conf
+# kube_addon_dir: /etc/kubernetes/addon

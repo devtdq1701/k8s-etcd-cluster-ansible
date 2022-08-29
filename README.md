@@ -30,6 +30,9 @@
 - network: calico, flannel
 - etcd deployment: kubeadm, service (systemd)
 
-**Please read through global var file in: ./host_vars/all.yml**
+## Notes
+
+- **Please read through global var file in: ./host_vars/all.yml**
+- **If want clear k8s n etcd cluster, run playbooks: reset-etcd-cluster.yml, reset-k8s.yml**
 
 > manual setup: https://dangquang.notion.site/Install-k8s-cluster-using-kubeadm-c3528ceddd9a48d2b308dbd822348273

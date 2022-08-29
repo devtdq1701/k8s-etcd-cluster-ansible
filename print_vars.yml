@@ -3,11 +3,11 @@
     # - name: Print all available facts
     #   debug:
     #     var: ansible_facts
-    - name: Get DEB architecture
-      shell: dpkg --print-architecture
-      register: deb_architecture
+    # - name: Get DEB architecture
+    #   shell: dpkg --print-architecture
+    #   register: deb_architecture
 
     - set_fact:
-        facts: "{{ hostvars[groups['etcd'][0]]['ansible_hostname'] }}"
+        facts: "{{ hostvars['etcd1']['ansible_all_ipv4_addresses'][0] }}"
     - debug:
         var: facts

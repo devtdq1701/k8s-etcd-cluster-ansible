@@ -50,12 +50,35 @@
       apt:
         update_cache: yes
 
-    - name: remove kube profile
-      file:
-        path: $HOME/.kube
-        state: absent
-
     - name: Delete /etc/kubernetes/
       file:
         state: absent
         path: /etc/kubernetes/
+      ignore_errors: True
+
+    - name: Enable and check etcd service
+      systemd:
+        name: etcd
+        state: stopped
+        enabled: no
+      ignore_errors: True
+
+    - name: Delete etcd binary
+      file:
+        state: absent
+        path: "/usr/local/bin/{{ item }}"
+      loop:
+        - etcd
+        - etcdctl
+      ignore_errors: True
+
+    - name: Delete etcd folders
+      file:
+        state: absent
+        path: "{{ item }}"
+      loop:
+        - /var/lib/etcd/
+        - /etc/etcd/
+      ignore_errors: True
+
+    - name: 

@@ -35,3 +35,5 @@ folder_path: "~/Workspace/Ansibles/kubeadm-ansible/roles/etcd-cluster/kubeadm/fi
 network_dir: /etc/kubernetes/network
 kubeadmin_config: /etc/kubernetes/admin.conf
 # kube_addon_dir: /etc/kubernetes/addon
+
+master_ip: "{{ hostvars[groups['control-plane'][0]]['ansible_all_ipv4_addresses'][0] }}"

@@ -1,15 +1,15 @@
 ---
-# - hosts: etcd
-#   gather_facts: yes
-#   become: yes
-#   roles:
-#     - { role: etcd-cluster/kubeadm, tags: [etcd, kubeadm] }
+- hosts: etcd
+  gather_facts: yes
+  become: yes
+  roles:
+    - { role: etcd-cluster/kubeadm, tags: [etcd, kubeadm] }
 
-# - hosts: etcd
-#   gather_facts: yes
-#   become: yes
-#   roles:
-#     - { role: etcd-cluster/service, tags: [etcd, service] }
+- hosts: etcd
+  gather_facts: yes
+  become: yes
+  roles:
+    - { role: etcd-cluster/service, tags: [etcd, service] }
 
 - hosts: control-plane
   gather_facts: yes

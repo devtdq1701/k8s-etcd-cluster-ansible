@@ -8,6 +8,6 @@
     #   register: deb_architecture
 
     - set_fact:
-        facts: "{{ hostvars['etcd1']['ansible_all_ipv4_addresses'][0] }}"
+        facts: "{{ folder_path }}"
     - debug:
         var: facts

@@ -9,4 +9,4 @@
 
 - name: Install etcd
   include_tasks: all.yml
-  when: etcd_cluster == 'true' and etcd_deployment == 'service' and not etcd_ca.stat.exists
+  # when: etcd_cluster == 'true' and etcd_deployment == 'service' and not etcd_ca.stat.exists

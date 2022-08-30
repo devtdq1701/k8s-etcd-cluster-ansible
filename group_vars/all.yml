@@ -27,7 +27,7 @@ etcd_cluster: "true"
 etcd_deployment: "service" #kubeadm
 etcd_ver: "3.4.20"
 # local folder to fetch cert from master
-folder_path: "~/Workspace/Ansibles/kubeadm-ansible/roles/etcd-cluster/kubeadm/files/"
+folder_path: "{{ playbook_dir }}/roles/etcd-cluster/kubeadm/files/"
 
 
 # systemd_dir: /lib/systemd/system

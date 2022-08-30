@@ -20,7 +20,7 @@
 
 - workers:
 
-  - api server: 6443
+  - kubelet: 10250
 
 - etcd: 2379, 2380
 

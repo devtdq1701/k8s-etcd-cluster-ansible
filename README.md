@@ -2,7 +2,7 @@
 
 ## Requirement
 
-1. Minimum 5 **nodes** [One master, one worker node and three etcd nodes]. You can have more worker nodes as per your requirement.
+1. Minimum 3 **nodes** [One master + etcd, 2 worker+etcd nodes]. You can have more worker nodes as per your requirement.
 2. The master node should have a minimum of **2 vCPU and 2GB RAM**.
 3. For the worker nodes, a minimum of 1vCPU and 2 GB RAM is recommended.
 4. 192.X.X.X/X network range with static IPs for master and worker nodes. We will be using the 10 series as the pod network range that will be used by the Calico network plugin. Make sure the Node IP range and pod IP range don’t overlap.

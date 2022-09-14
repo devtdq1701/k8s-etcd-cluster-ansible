@@ -2,6 +2,7 @@
   stat:
     path: "/etc/kubernetes/pki/etcd/"
   register: etcd_ca
+  when: etcd_cluster == 'true' and etcd_deployment == 'kubeadm' and not etcd_ca.stat.exists
 
 - name: Init cluster
   include_tasks: init.yml

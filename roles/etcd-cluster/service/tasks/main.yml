@@ -2,6 +2,7 @@
   stat:
     path: "/etc/etcd/pki/ca.pem"
   register: etcd_ca
+  when: etcd_cluster == 'true' and etcd_deployment == 'kubeadm' and not etcd_ca.stat.exists
 
 - name: Gen cert on node 1
   include_tasks: master.yml
@@ -9,4 +10,4 @@
 
 - name: Install etcd
   include_tasks: all.yml
-  # when: etcd_cluster == 'true' and etcd_deployment == 'service' and not etcd_ca.stat.exists
+  when: etcd_cluster == 'true' and etcd_deployment == 'service' and not etcd_ca.stat.exists

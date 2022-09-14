@@ -49,12 +49,24 @@
       shell: "ip route del {{ find_blackhole.stdout }}"
       ignore_errors: True
 
+    - name: Unhold k8s components pks
+      dpkg_selections:
+        name: "{{ item }}"
+        selection: install
+      loop:
+        - kubeadm
+        - kubelet
+        - kubectl
+      ignore_errors: True
+
     - name: Remove k8s components pks
-      apt:
-        name: "kubeadm kubelet containerd.io kubectl"
-        state: absent
-        purge: yes
-        update_cache: yes
+      shell: |
+        apt purge --autoremove kubeadm kubelet containerd.io kubectl -y
+      # apt:
+      #   name: "kubeadm kubelet containerd.io kubectl"
+      #   state: absent
+      #   purge: yes
+      #   update_cache: yes
       # loop:
       #   - kubeadm
       #   - kubelet
@@ -92,12 +104,19 @@
       apt:
         update_cache: yes
 
-    - name: remove kube profile
+    - name: remove dir
       file:
-        path: $HOME/.kube
+        path: "{{ item }}"
         state: absent
-
-    - name: Delete content & directory
-      file:
-        state: absent
-        path: /etc/kubernetes/
+      loop:
+        - /etc/cni/net.d
+        - $HOME/.kube
+        - /etc/kubernetes
+        - /opt/containerd
+        - /opt/cni/
+        # - /var/run/calico
+        # - /var/run/containerd
+        - /var/lib/cni
+        - /var/lib/etcd
+        - /etc/cni
+      ignore_errors: True

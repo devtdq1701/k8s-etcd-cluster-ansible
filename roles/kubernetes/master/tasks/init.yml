@@ -18,6 +18,7 @@
   delegate_to: "{{ item }}"
   delegate_facts: true
   loop: "{{ groups['etcd'] }}"
+  when: etcd_cluster == 'true'
 
 - name: create configuration files for kubeadm
   template:

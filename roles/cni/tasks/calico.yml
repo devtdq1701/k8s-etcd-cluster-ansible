@@ -1,0 +1,19 @@
+#for another calico link
+- name: "config ip subnet for {{ network_plugin }}"
+  shell: |
+    sed -i "/IPV4POOL_CIDR/s/^#//g" /tmp/{{ network_plugin }}.yml
+    sed -i "/192/s/^#//g" /tmp/{{ network_plugin }}.yml
+  when: config_pod_network == true and network_plugin == calico
+
+# - name: "config ip subnet for {{ network_plugin }}"
+#   lineinfile:
+#     path: "/tmp/{{ network_plugin }}.yml"
+#     search_string: "192.168.0.0/16"
+#     line: 'value: "{{ pod_network }}"'
+#   when: config_pod_network == true and network_plugin == calico
+
+# - name: install the operator on your cluster
+#   when: check_net is failed
+#   shell: |
+#     kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/tigera-operator.yaml
+#   ignore_errors: true

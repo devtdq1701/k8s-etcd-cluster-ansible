@@ -1,0 +1,6 @@
+- name: "config ip subnet for {{ network_plugin }}"
+  lineinfile:
+    path: "/tmp/{{ network_plugin }}.yml"
+    search_string: "10.244.0.0/16"
+    line: '"Network": {{ pod_network }}"'
+  when: config_pod_network == true and network_plugin == flannel

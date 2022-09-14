@@ -2,27 +2,14 @@
   get_url:
     url: "{{ network_manifest_url }}"
     dest: "/tmp/{{ network_plugin }}.yml"
+  when: config_pod_network == true
 
-# for another calico link
-# - name: "config ip subnet for {{ network_plugin }}"
-#   shell: |
-#     sed -i "/IPV4POOL_CIDR/s/^#//g" $HOME/manifest/{{ network_plugin }}.yml
-#     sed -i "/192/s/^#//g" $HOME/manifest/{{ network_plugin }}.yml
-#   when: config_pod_network == true and network_plugin == calico
-
-- name: "config ip subnet for {{ network_plugin }}"
-  lineinfile:
-    path: "/tmp/{{ network_plugin }}.yml"
-    search_string: "10.244.0.0/16"
-    line: '"Network": {{ pod_network }}"'
+- name: Config flannel
+  include_tasks: flannel.yml
   when: config_pod_network == true and network_plugin == flannel
-  become: true
 
-- name: "config ip subnet for {{ network_plugin }}"
-  lineinfile:
-    path: "/tmp/{{ network_plugin }}.yml"
-    search_string: "192.168.0.0/16"
-    line: 'value: "{{ pod_network }}"'
+- name: Config calico
+  include_tasks: calico.yml
   when: config_pod_network == true and network_plugin == calico
 
 - name: "Check {{ network_plugin }} daemonset is working"
@@ -31,18 +18,30 @@
   ignore_errors: true
   changed_when: false
 
-- name: install the operator on your cluster
-  when: check_net is failed
-  shell: |
-    kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/tigera-operator.yaml
-    kubectl create -f /tmp/{{ network_plugin }}.yml
-  ignore_errors: true
+# - name: install the operator on your cluster
+#   when: check_net is failed
+#   shell: |
+#     kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/tigera-operator.yaml
+#   ignore_errors: true
 
 - name: "install {{ network_plugin }}"
-  when: check_net is failed
+  when: check_net is failed and config_pod_network == true
   shell: |
-    kubectl create -f /tmp/{{ network_plugin }}.yml
+    kubectl apply -f /tmp/{{ network_plugin }}.yml
   # kubectl apply -f $HOME/manifest/{{ network_plugin }}.yml
   # args:
   #   chdir: $HOME
   ignore_errors: true
+
+- name: "install {{ network_plugin }}"
+  when: check_net is failed and config_pod_network == false
+  shell: |
+    kubectl apply -f {{ network_manifest_url }}
+  # kubectl apply -f $HOME/manifest/{{ network_plugin }}.yml
+  # args:
+  #   chdir: $HOME
+  ignore_errors: true
+
+- name: Sleep for 300 seconds and continue with play
+  ansible.builtin.wait_for:
+    timeout: 300

@@ -40,9 +40,11 @@
   shell: |
     containerd config default>/etc/containerd/config.toml
     sed -i -e 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+    systemctl daemon-reload
     systemctl restart containerd
     systemctl enable containerd
   # notify:
+  #   - systemctl daemon-reload
   #   - restart containerd
   #   - enable containerd
   when: container_runtime == "docker" or container_runtime == "containerd"

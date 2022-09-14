@@ -7,12 +7,20 @@
   include_tasks: init.yml
   when: not kubeadm_ca.stat.exists
 
-# - name: Enable and check kubelet service
-#   systemd:
-#     name: kubelet
-#     daemon_reload: yes
-#     state: started
-#     enabled: yes
+- name: Conf kubectl
+  include_tasks: kubectl-autocompletion.yml
+  when: kubectl_autocompletion == true
+
+- name: Sleep for 300 seconds and continue with play
+  ansible.builtin.wait_for:
+    timeout: 300
+
+- name: Enable and check kubelet service
+  systemd:
+    name: kubelet
+    daemon_reload: yes
+    state: started
+    enabled: yes
 #   register: started_kubelet
 
 # - name: "Copy config file"

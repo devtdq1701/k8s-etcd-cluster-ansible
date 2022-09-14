@@ -1,0 +1,21 @@
+- name: get shell type
+  shell: echo $SHELL | cut -d'/' -f 3
+  register: shell_var
+
+# - name: "Check alias exist"
+#   shell: grep -Fxq "alias k=kubectl" $HOME/.{{ shell_var.stdout_lines[0] }}rc
+#   register: check_alias
+#   ignore_errors: true
+#   changed_when: false
+
+# - name: add alias
+#   lineinfile:
+#     path: "$HOME/.{{ shell_var.stdout_lines[0] }}rc"
+#     line: alias k=kubectl
+#   when: check_alias is failed
+
+- name: tab completion
+  shell: |
+    grep -Fxq "alias k=kubectl" $HOME/.{{ shell_var.stdout_lines[0] }}rc || echo "alias k=kubectl" >> $HOME/.{{ shell_var.stdout_lines[0] }}rc
+    grep -Fxq "source <(kubectl completion bash)" $HOME/.{{ shell_var.stdout_lines[0] }}rc || echo "source <(kubectl completion bash)" >> $HOME/.{{ shell_var.stdout_lines[0] }}rc
+    grep -Fxq "complete -o default -F __start_kubectl k" $HOME/.{{ shell_var.stdout_lines[0] }}rc || echo "complete -o default -F __start_kubectl k" >> $HOME/.{{ shell_var.stdout_lines[0] }}rc

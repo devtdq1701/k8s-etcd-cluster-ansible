@@ -16,13 +16,14 @@ calico_version: "3.24.0"
 config_pod_network: false
 pod_network: "192.168.0.0/16" #10.244.0.0/16
 service_cidr: "10.96.0.0/12"
-network_manifest_url: "https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/custom-resources.yaml"
+network_manifest_url: "https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/calico.yaml"
+# network_manifest_url: "https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/custom-resources.yaml"
 # https://raw.githubusercontent.com/projectcalico/calico/v3.24.0/manifests/calico.yaml
 # https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
 
 #etcd cluster
 # if u want a etcd cluster, please define them in inversitory file :)
-etcd_cluster: "true"
+etcd_cluster: "false"
 # deployment method, using kubeadm or as service
 etcd_deployment: "service" #kubeadm
 etcd_ver: "3.4.20"
@@ -37,3 +38,6 @@ kubeadmin_config: /etc/kubernetes/admin.conf
 # kube_addon_dir: /etc/kubernetes/addon
 
 master_ip: "{{ hostvars[groups['control-plane'][0]]['ansible_all_ipv4_addresses'][0] }}"
+
+#kubectl autocompletion
+kubectl_autocompletion: true

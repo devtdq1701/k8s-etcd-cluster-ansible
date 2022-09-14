@@ -6,6 +6,7 @@
 - name: set join command
   set_fact:
     join_command: "{{ join_command_raw.stdout_lines[0] }}"
+  run_once: true
   # delegate_to: "{{ groups['control-plane'][0] }}"
 
 - name: Reset Kubernetes component
@@ -17,6 +18,10 @@
   register: join_cluster
   notify:
     - Recreate kube-dns
+
+- name: Sleep for 300 seconds and continue with play
+  ansible.builtin.wait_for:
+    timeout: 300
 
 # - name: Join to Kubernetes cluster
 #   when: reset_cluster is succeeded
